@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Churn Analysis Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .form-section {
+            grid-column: 1 / -1;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        input {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-card {
+            display: none;
+        }
+
+        .result-card.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+
+        .risk-high {
+            background: #fee;
+            color: #c33;
+        }
+
+        .risk-medium {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+
+        .risk-low {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .probability-bar {
+            width: 100%;
+            height: 40px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .probability-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80 0%, #facc15 50%, #ef4444 100%);
+            border-radius: 20px;
+            transition: width 1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 15px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Customer Churn Analysis</h1>
+            <p>Predict customer churn risk with advanced machine learning</p>
+        </header>
+
+        <div class="main-content">
+            <div class="card form-section">
+                <h2>Customer Information</h2>
+                <form id="churnForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="customer_id">Customer ID *</label>
+                            <input type="text" id="customer_id" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="age">Age *</label>
+                            <input type="number" id="age" min="18" max="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tenure_months">Tenure (Months) *</label>
+                            <input type="number" id="tenure_months" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="monthly_logins">Monthly Logins *</label>
+                            <input type="number" id="monthly_logins" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="avg_session_time">Avg Session Time (min) *</label>
+                            <input type="number" id="avg_session_time" step="0.1" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="usage_growth_rate">Usage Growth Rate *</label>
+                            <input type="number" id="usage_growth_rate" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="last_login_days_ago">Last Login (Days Ago) *</label>
+                            <input type="number" id="last_login_days_ago" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="total_revenue">Total Revenue ($) *</label>
+                            <input type="number" id="total_revenue" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="payment_failures">Payment Failures *</label>
+                            <input type="number" id="payment_failures" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="avg_resolution_time">Avg Resolution Time (hrs) *</label>
+                            <input type="number" id="avg_resolution_time" step="0.1" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="csat_score">CSAT Score (1-5) *</label>
+                            <input type="number" id="csat_score" step="0.1" min="1" max="5" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email_open_rate">Email Open Rate (%) *</label>
+                            <input type="number" id="email_open_rate" step="0.01" min="0" max="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="marketing_click_rate">Marketing Click Rate (%) *</label>
+                            <input type="number" id="marketing_click_rate" step="0.01" min="0" max="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="nps_score">NPS Score (-100 to 100) *</label>
+                            <input type="number" id="nps_score" min="-100" max="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="engagement_score">Engagement Score *</label>
+                            <input type="number" id="engagement_score" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        Analyze Churn Risk
+                    </button>
+                </form>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Analyzing customer data...</p>
+                </div>
+
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+
+            <div class="card result-card" id="resultCard">
+                <h2>Prediction Results</h2>
+                <div id="results">
+                    <div>
+                        <strong>Customer ID:</strong> <span id="result_customer_id"></span>
+                    </div>
+                    <div class="risk-badge" id="riskBadge"></div>
+                    
+                    <h3 style="margin-top: 20px; color: #667eea;">Churn Probability</h3>
+                    <div class="probability-bar">
+                        <div class="probability-fill" id="probabilityBar"></div>
+                    </div>
+
+                    <h3 style="margin-top: 30px; color: #667eea;">Key Metrics</h3>
+                    <div class="metrics-grid" id="metricsGrid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000';  // Update this with your API URL
+
+        const form = document.getElementById('churnForm');
+        const loading = document.getElementById('loading');
+        const resultCard = document.getElementById('resultCard');
+        const errorMessage = document.getElementById('errorMessage');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Hide previous results and errors
+            resultCard.classList.remove('show');
+            errorMessage.classList.remove('show');
+            loading.classList.add('show');
+            submitBtn.disabled = true;
+
+            // Collect form data
+            const formData = {
+                customer_id: document.getElementById('customer_id').value,
+                age: document.getElementById('age').value,
+                tenure_months: document.getElementById('tenure_months').value,
+                monthly_logins: document.getElementById('monthly_logins').value,
+                avg_session_time: document.getElementById('avg_session_time').value,
+                usage_growth_rate: document.getElementById('usage_growth_rate').value,
+                last_login_days_ago: document.getElementById('last_login_days_ago').value,
+                total_revenue: document.getElementById('total_revenue').value,
+                payment_failures: document.getElementById('payment_failures').value,
+                avg_resolution_time: document.getElementById('avg_resolution_time').value,
+                csat_score: document.getElementById('csat_score').value,
+                email_open_rate: document.getElementById('email_open_rate').value,
+                marketing_click_rate: document.getElementById('marketing_click_rate').value,
+                nps_score: document.getElementById('nps_score').value,
+                engagement_score: document.getElementById('engagement_score').value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/model/churn`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to get prediction');
+                }
+
+                displayResults(data);
+            } catch (error) {
+                errorMessage.textContent = `Error: ${error.message}`;
+                errorMessage.classList.add('show');
+            } finally {
+                loading.classList.remove('show');
+                submitBtn.disabled = false;
+            }
+        });
+
+        function displayResults(data) {
+            document.getElementById('result_customer_id').textContent = data.customer_id;
+            
+            // Display risk badge
+            const riskBadge = document.getElementById('riskBadge');
+            const risk = data.churn_risk || 'Unknown';
+            riskBadge.textContent = `${risk} Risk`;
+            riskBadge.className = `risk-badge risk-${risk.toLowerCase()}`;
+
+            // Display probability bar
+            const probability = data.churn_probability || 0.5;
+            const probabilityBar = document.getElementById('probabilityBar');
+            probabilityBar.style.width = `${probability * 100}%`;
+            probabilityBar.textContent = `${(probability * 100).toFixed(1)}%`;
+
+            // Display key metrics
+            const metricsGrid = document.getElementById('metricsGrid');
+            const metrics = [
+                { label: 'Tenure', value: `${data.tenure_months} months` },
+                { label: 'Monthly Logins', value: data.monthly_logins },
+                { label: 'CSAT Score', value: data.csat_score },
+                { label: 'NPS Score', value: data.nps_score },
+                { label: 'Total Revenue', value: `$${parseFloat(data.total_revenue).toFixed(2)}` },
+                { label: 'Payment Failures', value: data.payment_failures }
+            ];
+
+            metricsGrid.innerHTML = metrics.map(metric => `
+                <div class="metric-item">
+                    <div class="metric-label">${metric.label}</div>
+                    <div class="metric-value">${metric.value}</div>
+                </div>
+            `).join('');
+
+            resultCard.classList.add('show');
+        }
+
+        // Auto-fill with sample data for testing
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('demo') === 'true') {
+                document.getElementById('customer_id').value = 'CUST001';
+                document.getElementById('age').value = '35';
+                document.getElementById('tenure_months').value = '24';
+                document.getElementById('monthly_logins').value = '15';
+                document.getElementById('avg_session_time').value = '25.5';
+                document.getElementById('usage_growth_rate').value = '0.15';
+                document.getElementById('last_login_days_ago').value = '3';
+                document.getElementById('total_revenue').value = '5000';
+                document.getElementById('payment_failures').value = '1';
+                document.getElementById('avg_resolution_time').value = '2.5';
+                document.getElementById('csat_score').value = '4.2';
+                document.getElementById('email_open_rate').value = '45.5';
+                document.getElementById('marketing_click_rate').value = '12.3';
+                document.getElementById('nps_score').value = '8';
+                document.getElementById('engagement_score').value = '75.5';
+            }
+        });
+    </script>
+</body>
+</html>
