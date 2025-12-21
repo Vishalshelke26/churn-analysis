@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Customer Churn Prediction</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -10,28 +9,49 @@
 <div class="overlay">
     <div class="card">
         <h1>Customer Churn Prediction</h1>
-        <p>Predict whether a customer will churn using ML</p>
 
-        <form method="POST" action="/model/churn">
-            <input type="number" name="age" placeholder="Age" required>
-            <input type="number" name="tenure_months" placeholder="Tenure (Months)" required>
-            <input type="number" name="monthly_logins" placeholder="Monthly Logins" required>
-            <input type="number" step="0.1" name="avg_session_time" placeholder="Avg Session Time" required>
-            <input type="number" step="0.01" name="usage_growth_rate" placeholder="Usage Growth Rate" required>
-            <input type="number" name="last_login_days_ago" placeholder="Last Login Days Ago" required>
-            <input type="number" step="0.1" name="total_revenue" placeholder="Total Revenue" required>
-            <input type="number" name="payment_failures" placeholder="Payment Failures" required>
-            <input type="number" step="0.1" name="avg_resolution_time" placeholder="Avg Resolution Time" required>
-            <input type="number" step="0.1" name="csat_score" placeholder="CSAT Score" required>
-            <input type="number" step="0.01" name="email_open_rate" placeholder="Email Open Rate" required>
-            <input type="number" step="0.01" name="marketing_click_rate" placeholder="Marketing Click Rate" required>
-            <input type="number" name="nps_score" placeholder="NPS Score" required>
-            <input type="number" step="0.1" name="engagement_score" placeholder="Engagement Score" required>
+        <form id="churnForm">
+            <input name="age" placeholder="Age" required>
+            <input name="tenure_months" placeholder="Tenure Months" required>
+            <input name="monthly_logins" placeholder="Monthly Logins" required>
+            <input name="avg_session_time" placeholder="Avg Session Time" required>
+            <input name="usage_growth_rate" placeholder="Usage Growth Rate" required>
+            <input name="last_login_days_ago" placeholder="Last Login Days Ago" required>
+            <input name="total_revenue" placeholder="Total Revenue" required>
+            <input name="payment_failures" placeholder="Payment Failures" required>
+            <input name="avg_resolution_time" placeholder="Avg Resolution Time" required>
+            <input name="csat_score" placeholder="CSAT Score" required>
+            <input name="email_open_rate" placeholder="Email Open Rate" required>
+            <input name="marketing_click_rate" placeholder="Marketing Click Rate" required>
+            <input name="nps_score" placeholder="NPS Score" required>
+            <input name="engagement_score" placeholder="Engagement Score" required>
 
-            <button type="submit">Predict Churn</button>
+            <button type="submit">Predict</button>
         </form>
+
+        <div id="result" class="result-box"></div>
     </div>
 </div>
+
+<script>
+document.getElementById("churnForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    const response = await fetch("/model/churn", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+
+    document.getElementById("result").innerHTML = `
+        <h3>Prediction: ${data.prediction}</h3>
+        <p>Churn Probability: ${data.probability}%</p>
+    `;
+});
+</script>
 
 </body>
 </html>
