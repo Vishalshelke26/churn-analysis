@@ -1,57 +1,406 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer Churn Prediction</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .form-group input {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: #aaa;
+        }
+
+        .tooltip {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result-container {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .result-container.churn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+        }
+
+        .result-container.no-churn {
+            background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
+            color: white;
+        }
+
+        .result-container h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .result-container p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+        }
+
+        .loader {
+            display: none;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #ffe0e0;
+            color: #d32f2f;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+            text-align: center;
+            border: 2px solid #ffcdd2;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-container {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-
-<div class="overlay">
-    <div class="card">
-        <h1>Customer Churn Prediction</h1>
+    <div class="container">
+        <div class="header">
+            <h1>🔮 Customer Churn Prediction</h1>
+            <p>Predict customer retention using machine learning</p>
+        </div>
 
         <form id="churnForm">
-            <input name="age" placeholder="Age" required>
-            <input name="tenure_months" placeholder="Tenure Months" required>
-            <input name="monthly_logins" placeholder="Monthly Logins" required>
-            <input name="avg_session_time" placeholder="Avg Session Time" required>
-            <input name="usage_growth_rate" placeholder="Usage Growth Rate" required>
-            <input name="last_login_days_ago" placeholder="Last Login Days Ago" required>
-            <input name="total_revenue" placeholder="Total Revenue" required>
-            <input name="payment_failures" placeholder="Payment Failures" required>
-            <input name="avg_resolution_time" placeholder="Avg Resolution Time" required>
-            <input name="csat_score" placeholder="CSAT Score" required>
-            <input name="email_open_rate" placeholder="Email Open Rate" required>
-            <input name="marketing_click_rate" placeholder="Marketing Click Rate" required>
-            <input name="nps_score" placeholder="NPS Score" required>
-            <input name="engagement_score" placeholder="Engagement Score" required>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="age">Age *</label>
+                    <input type="number" id="age" name="age" placeholder="e.g., 35" required min="18" max="120">
+                    <span class="tooltip">Customer age in years</span>
+                </div>
 
-            <button type="submit">Predict</button>
+                <div class="form-group">
+                    <label for="tenure_months">Tenure (Months) *</label>
+                    <input type="number" id="tenure_months" name="tenure_months" placeholder="e.g., 24" required min="0">
+                    <span class="tooltip">Customer relationship duration</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="monthly_logins">Monthly Logins *</label>
+                    <input type="number" id="monthly_logins" name="monthly_logins" placeholder="e.g., 15" required min="0">
+                    <span class="tooltip">Average logins per month</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="avg_session_time">Avg Session Time (min) *</label>
+                    <input type="number" step="0.01" id="avg_session_time" name="avg_session_time" placeholder="e.g., 25.5" required min="0">
+                    <span class="tooltip">Average session duration</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="usage_growth_rate">Usage Growth Rate (%) *</label>
+                    <input type="number" step="0.01" id="usage_growth_rate" name="usage_growth_rate" placeholder="e.g., 5.2" required>
+                    <span class="tooltip">Month-over-month growth</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="last_login_days_ago">Last Login (Days Ago) *</label>
+                    <input type="number" id="last_login_days_ago" name="last_login_days_ago" placeholder="e.g., 3" required min="0">
+                    <span class="tooltip">Days since last activity</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="total_revenue">Total Revenue ($) *</label>
+                    <input type="number" step="0.01" id="total_revenue" name="total_revenue" placeholder="e.g., 5000" required min="0">
+                    <span class="tooltip">Lifetime revenue generated</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="payment_failures">Payment Failures *</label>
+                    <input type="number" id="payment_failures" name="payment_failures" placeholder="e.g., 0" required min="0">
+                    <span class="tooltip">Number of failed payments</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="avg_resolution_time">Avg Resolution Time (hrs) *</label>
+                    <input type="number" step="0.01" id="avg_resolution_time" name="avg_resolution_time" placeholder="e.g., 12.5" required min="0">
+                    <span class="tooltip">Support ticket resolution time</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="csat_score">CSAT Score (1-5) *</label>
+                    <input type="number" step="0.1" id="csat_score" name="csat_score" placeholder="e.g., 4.2" min="1" max="5" required>
+                    <span class="tooltip">Customer satisfaction score</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="email_open_rate">Email Open Rate (%) *</label>
+                    <input type="number" step="0.01" id="email_open_rate" name="email_open_rate" placeholder="e.g., 35.5" min="0" max="100" required>
+                    <span class="tooltip">Email engagement percentage</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="marketing_click_rate">Marketing Click Rate (%) *</label>
+                    <input type="number" step="0.01" id="marketing_click_rate" name="marketing_click_rate" placeholder="e.g., 12.3" min="0" max="100" required>
+                    <span class="tooltip">Campaign click-through rate</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="nps_score">NPS Score (-100 to 100) *</label>
+                    <input type="number" id="nps_score" name="nps_score" placeholder="e.g., 50" min="-100" max="100" required>
+                    <span class="tooltip">Net Promoter Score</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="engagement_score">Engagement Score (0-100) *</label>
+                    <input type="number" step="0.01" id="engagement_score" name="engagement_score" placeholder="e.g., 75.5" min="0" max="100" required>
+                    <span class="tooltip">Overall engagement metric</span>
+                </div>
+            </div>
+
+            <div class="btn-container">
+                <button type="submit" class="btn btn-primary" id="submitBtn">Predict Churn</button>
+                <button type="reset" class="btn btn-secondary">Reset Form</button>
+            </div>
         </form>
 
-        <div id="result" class="result-box"></div>
+        <div class="loader" id="loader"></div>
+        <div class="error-message" id="errorMessage"></div>
+        <div class="result-container" id="resultContainer">
+            <h2 id="resultTitle"></h2>
+            <p id="resultMessage"></p>
+        </div>
     </div>
-</div>
 
-<script>
-document.getElementById("churnForm").addEventListener("submit", async function(e) {
-    e.preventDefault();
+    <script>
+        const form = document.getElementById('churnForm');
+        const loader = document.getElementById('loader');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultMessage = document.getElementById('resultMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const submitBtn = document.getElementById('submitBtn');
 
-    const formData = new FormData(this);
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-    const response = await fetch("/model/churn", {
-        method: "POST",
-        body: formData
-    });
+            // Hide previous results
+            resultContainer.style.display = 'none';
+            errorMessage.style.display = 'none';
+            loader.style.display = 'block';
+            submitBtn.disabled = true;
 
-    const data = await response.json();
+            // Gather form data
+            const formData = new FormData(form);
 
-    document.getElementById("result").innerHTML = `
-        <h3>Prediction: ${data.prediction}</h3>
-        <p>Churn Probability: ${data.probability}%</p>
-    `;
-});
-</script>
+            try {
+                const response = await fetch('/model/churn', {
+                    method: 'POST',
+                    body: formData
+                });
 
+                const data = await response.json();
+                loader.style.display = 'none';
+                submitBtn.disabled = false;
+
+                if (response.ok) {
+                    const customerStatus = data["Customer is "];
+                    const isChurn = customerStatus === "Churn";
+
+                    resultContainer.className = 'result-container ' + (isChurn ? 'churn' : 'no-churn');
+                    resultTitle.textContent = isChurn ? '⚠️ High Churn Risk' : '✅ Low Churn Risk';
+                    resultMessage.textContent = customerStatus;
+                    resultContainer.style.display = 'block';
+
+                    // Scroll to result
+                    resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    throw new Error(data.error || 'Prediction failed');
+                }
+            } catch (error) {
+                loader.style.display = 'none';
+                submitBtn.disabled = false;
+                errorMessage.textContent = '❌ Error: ' + error.message;
+                errorMessage.style.display = 'block';
+                errorMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        });
+
+        form.addEventListener('reset', () => {
+            resultContainer.style.display = 'none';
+            errorMessage.style.display = 'none';
+        });
+    </script>
 </body>
 </html>
