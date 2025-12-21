@@ -1,10 +1,15 @@
+import os
 import numpy as np
 import joblib
 
 class ChurnCustomer:
     def __init__(self, data):
         self.data = data
-        self.model = joblib.load("src/model/churn_model.pkl")
+
+        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        MODEL_PATH = os.path.join(BASE_DIR, "model", "churn_model.pkl")
+
+        self.model = joblib.load(MODEL_PATH)
 
     def predict_charges(self):
         features = np.array([[
@@ -28,3 +33,4 @@ class ChurnCustomer:
         probability = self.model.predict_proba(features)[0][1]
 
         return prediction, probability
+
